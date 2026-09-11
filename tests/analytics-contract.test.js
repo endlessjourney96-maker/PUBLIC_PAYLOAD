@@ -1,4 +1,4 @@
-// Contract tests for anonymous MVP analytics.
+// Contract tests for anonymous MVP analytics and static asset coexistence.
 // Run with: node tests/analytics-contract.test.js
 // No network access required.
 const assert = require('node:assert/strict');
@@ -26,13 +26,16 @@ assert(worker.includes("url.pathname !== '/api/events'"), 'worker endpoint must 
 assert(worker.includes("if (length > 2048)"), 'payload size guard must remain');
 assert(worker.includes('SAFE_VALUE'), 'value allowlist validation must remain');
 assert(worker.includes("e.recommendation_id || 'none'"), 'recommendation id must be persisted as anonymous dimension');
-assert(!worker.includes('request.headers.get(\'user-agent\')'), 'UA must not be persisted');
+assert(!worker.includes("request.headers.get('user-agent')"), 'UA must not be persisted');
 assert(!worker.includes('cf-connecting-ip'), 'IP must not be persisted');
 assert(!worker.includes('cookie'), 'cookies must not be persisted');
 assert(wrangler.includes('ai_work_style_events'), 'Analytics Engine dataset binding must remain configured');
 
-// Deployment guard: current worker only handles /api/events. Static asset coexistence
-// is NOT considered complete until a static-assets binding/routing strategy is added and verified.
-assert(worker.includes("return new Response('Not found', { status: 404 })"), 'expected current non-API 404 guard changed; re-review static routing');
+// Deployment contract: static files are served by Cloudflare Assets while only /api/*
+// invokes the Worker first. This prevents analytics routing from swallowing the MVP UI.
+assert(wrangler.includes('"directory": "./"'), 'static assets directory must remain configured');
+assert(wrangler.includes('"binding": "ASSETS"'), 'static assets binding must remain configured');
+assert(wrangler.includes('"run_worker_first": ["/api/*"]'), 'only API routes should run the Worker first');
+assert(worker.includes("return new Response('Not found', { status: 404 })"), 'non-event API requests should remain rejected by Worker');
 
-console.log('analytics contract: OK');
+console.log('analytics + assets contract: OK');
