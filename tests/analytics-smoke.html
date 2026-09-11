@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="ja">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Analytics smoke test</title></head>
+<body>
+<h1>Anonymous analytics smoke test</h1>
+<p>This harness validates the browser client without changing the production diagnosis page.</p>
+<pre id="out">running…</pre>
+<script src="../src/analytics-client.js"></script>
+<script>
+(function () {
+  const results = [];
+  function check(name, actual, expected) {
+    results.push({ name, pass: actual === expected, actual, expected });
+  }
+  check('client exists', typeof window.MvpAnalytics?.send, 'function');
+  check('reject unknown event', window.MvpAnalytics.send('unknown_event', {}), false);
+  check('accept page_view', window.MvpAnalytics.send('page_view', { source: 'smoke', campaign: 'browser_test' }), true);
+  check('accept diagnosis_start', window.MvpAnalytics.send('diagnosis_start', { source: 'smoke', campaign: 'browser_test' }), true);
+  check('accept diagnosis_complete', window.MvpAnalytics.send('diagnosis_complete', { role: 'manager', pain: 'meeting', budget: 'zero' }), true);
+  check('accept recommendation_click', window.MvpAnalytics.send('recommendation_click', { recommendation_id: 'chatgpt-plus' }), true);
+  check('reject malformed event name', window.MvpAnalytics.send('<script>', { source: 'x' }), false);
+  document.getElementById('out').textContent = JSON.stringify({ passed: results.filter(x => x.pass).length, total: results.length, results }, null, 2);
+})();
+</script>
+</body>
+</html>
