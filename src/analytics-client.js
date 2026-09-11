@@ -11,7 +11,8 @@
     'recommendation_click'
   ]);
   const ALLOWED_KEYS = new Set([
-    'source', 'campaign', 'pain', 'role', 'budget', 'recommendation_id'
+    'source', 'campaign', 'pattern', 'budget', 'decision',
+    'recommendation_id', 'kind', 'rank'
   ]);
   const SAFE_VALUE = /^[a-zA-Z0-9_.:-]{1,80}$/;
 
@@ -19,9 +20,10 @@
     if (!ALLOWED_EVENTS.has(name)) return null;
     const payload = { name };
     for (const [key, value] of Object.entries(data || {})) {
-      if (!ALLOWED_KEYS.has(key) || typeof value !== 'string') continue;
-      if (!SAFE_VALUE.test(value)) continue;
-      payload[key] = value;
+      if (!ALLOWED_KEYS.has(key)) continue;
+      const normalized = typeof value === 'number' ? String(value) : value;
+      if (typeof normalized !== 'string' || !SAFE_VALUE.test(normalized)) continue;
+      payload[key] = normalized;
     }
     return payload;
   }
