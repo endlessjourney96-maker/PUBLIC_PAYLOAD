@@ -1,0 +1,12 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "public-payload",
+  "main": "src/analytics-worker.js",
+  "compatibility_date": "2026-09-11",
+  "analytics_engine_datasets": [
+    {
+      "binding": "ANALYTICS",
+      "dataset": "ai_work_style_events"
+    }
+  ]
+}
