@@ -1,0 +1,25 @@
+{
+  "version": "2026-09-11.1",
+  "principle": "Diagnose work patterns before job titles. Recommendations may be free, AI/SaaS, physical tools, services, or buy-nothing.",
+  "patterns": [
+    {"id":"information","label":"情報を探す・整理する時間が多い","free_first":"情報の置き場所を1つ決め、探す前に検索語と欲しい答えを1行で固定する","solution_tags":["knowledge","search","ai"]},
+    {"id":"writing","label":"文章・資料・報告を作ることが多い","free_first":"目的・材料・任せる範囲の3点をテンプレ化する","solution_tags":["writing","template","ai"]},
+    {"id":"coordination","label":"連絡・調整・予約が多い","free_first":"依頼文を目的・期限・相手の次アクションの3点に統一する","solution_tags":["calendar","communication","automation"]},
+    {"id":"numbers","label":"数字・Excel・集計作業が多い","free_first":"入力・計算・確認を分離し、繰り返し手順を1本だけテンプレ化する","solution_tags":["spreadsheet","automation","ai"]},
+    {"id":"repetition","label":"同じ入力・転記・確認を繰り返している","free_first":"繰り返し作業を記録し、最も回数が多い1工程だけ先に削る","solution_tags":["automation","integration","rpa"]},
+    {"id":"customer","label":"接客・営業・顧客対応が多い","free_first":"よくある質問と回答を10件だけ標準化する","solution_tags":["crm","sales","ai"]},
+    {"id":"field","label":"現場作業・移動・立ち仕事が多い","free_first":"移動・待ち・記録のどこで時間を失っているか1週間だけ記録する","solution_tags":["mobile","physical","workflow"]},
+    {"id":"teaching","label":"教える・育てる・引き継ぐことが多い","free_first":"質問される内容をFAQ化し、最初の10項目だけ共通知識にする","solution_tags":["knowledge","training","ai"]},
+    {"id":"creative","label":"制作・デザイン・動画などを作る","free_first":"企画・素材・仕上げを分け、最も時間がかかる工程だけAI化候補にする","solution_tags":["creative","ai","workflow"]},
+    {"id":"technical","label":"開発・IT運用・技術作業が多い","free_first":"定型調査・変更・検証を分け、検証条件を先に自動化する","solution_tags":["coding","devops","ai"]},
+    {"id":"management","label":"管理・意思決定・マネジメントが多い","free_first":"判断待ちを一覧化し、誰が・何を・いつ決めるかだけ固定する","solution_tags":["management","decision","ai"]},
+    {"id":"other","label":"どれでもない／うまく言語化できない","free_first":"今日やった仕事を30分単位で3日だけ記録し、時間を使った上位3作業を見つける","solution_tags":["discovery","workflow"]}
+  ],
+  "role_contexts": ["経営・管理","企画・事務","営業・接客","教育・支援","クリエイティブ","IT・開発","現場・物流・製造","その他"],
+  "guardrails": [
+    "Affiliate payout must never affect recommendation ranking.",
+    "Always consider a free-first or buy-nothing result.",
+    "Do not infer sensitive traits from work-pattern answers.",
+    "Occupation is context, not the primary recommendation key."
+  ]
+}
