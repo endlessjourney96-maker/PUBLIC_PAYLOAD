@@ -3,6 +3,11 @@
   "name": "public-payload",
   "main": "src/analytics-worker.js",
   "compatibility_date": "2026-09-11",
+  "assets": {
+    "directory": "./",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*"]
+  },
   "analytics_engine_datasets": [
     {
       "binding": "ANALYTICS",
