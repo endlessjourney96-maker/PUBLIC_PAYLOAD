@@ -9,7 +9,8 @@ const ALLOWED_EVENTS = new Set([
   'recommendation_click'
 ]);
 const ALLOWED_KEYS = new Set([
-  'name','source','campaign','pain','role','budget','recommendation_id'
+  'name','source','campaign','pattern','budget','decision',
+  'recommendation_id','kind','rank'
 ]);
 const SAFE_VALUE = /^[a-zA-Z0-9_.:-]{1,80}$/;
 
@@ -50,19 +51,24 @@ export default {
 
     const e = sanitize(raw);
     if (!e) return json({ ok: false, error: 'invalid_event' }, 400);
+    if (!env.ANALYTICS || typeof env.ANALYTICS.writeDataPoint !== 'function') {
+      return json({ ok: false, error: 'analytics_unavailable' }, 503);
+    }
 
     // Dataset schema:
-    // blobs: event, source, campaign, pain, role, budget, recommendation_id
+    // blobs: event, source, campaign, pattern, budget, decision, recommendation_id, kind, rank
     // doubles: count (=1)
     env.ANALYTICS.writeDataPoint({
       blobs: [
         e.name,
         e.source || 'none',
         e.campaign || 'none',
-        e.pain || 'none',
-        e.role || 'none',
+        e.pattern || 'none',
         e.budget || 'none',
-        e.recommendation_id || 'none'
+        e.decision || 'none',
+        e.recommendation_id || 'none',
+        e.kind || 'none',
+        e.rank || 'none'
       ],
       doubles: [1]
     });
