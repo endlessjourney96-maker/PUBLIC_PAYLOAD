@@ -1,5 +1,5 @@
 // Work-pattern-first recommendation engine for AI Work Environment MVP
-// Pure functions: safe to reuse in browser, Worker, tests, or future verticals.
+// Pure recommendation functions plus a fail-open browser analytics bridge.
 (function(root,factory){
   const api=factory();
   if(typeof module==='object'&&module.exports) module.exports=api;
@@ -42,6 +42,44 @@
       decision:paid.length?'compare_options':'buy_nothing',
       recommendations:[...free,...paid].map(({score,...x})=>x),
       ranking_policy:'fit_first_no_affiliate_payout'
+    };
+  }
+
+  // Bridge the existing local MVP event log to the anonymous Worker endpoint.
+  // This keeps local diagnostics intact and fails open if analytics is unavailable.
+  if(typeof window!=='undefined' && window.localStorage && !window.__mvpAnalyticsBridge){
+    window.__mvpAnalyticsBridge=true;
+    const allowedEvents=new Set(['page_view','diagnosis_start','diagnosis_complete','recommendation_click']);
+    const allowedKeys=new Set(['pattern','budget','decision','recommendation_id','kind','rank']);
+    const safe=/^[a-zA-Z0-9_.:-]{1,80}$/;
+    const originalSetItem=Storage.prototype.setItem;
+    function sendEvent(event){
+      if(!event||!allowedEvents.has(event.name)) return;
+      const payload={name:event.name};
+      for(const [key,value] of Object.entries(event)){
+        const mapped=key==='solution_id'?'recommendation_id':key;
+        if(!allowedKeys.has(mapped)) continue;
+        const normalized=typeof value==='number'?String(value):value;
+        if(typeof normalized==='string'&&safe.test(normalized)) payload[mapped]=normalized;
+      }
+      try{
+        const body=JSON.stringify(payload);
+        if(navigator.sendBeacon){
+          const blob=new Blob([body],{type:'application/json'});
+          if(navigator.sendBeacon('/api/events',blob)) return;
+        }
+        fetch('/api/events',{method:'POST',headers:{'content-type':'application/json'},body,keepalive:true,credentials:'omit',cache:'no-store'}).catch(()=>{});
+      }catch(_){ }
+    }
+    Storage.prototype.setItem=function(key,value){
+      const result=originalSetItem.apply(this,arguments);
+      if(this===window.localStorage&&key==='mvp_events'){
+        try{
+          const events=JSON.parse(value||'[]');
+          sendEvent(events[events.length-1]);
+        }catch(_){ }
+      }
+      return result;
     };
   }
 
