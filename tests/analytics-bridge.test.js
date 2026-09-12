@@ -11,7 +11,10 @@ class StorageMock {
 }
 global.Storage=StorageMock;
 window.localStorage=new StorageMock();
-global.navigator={sendBeacon:(url,body)=>{sent.push({url,body});return true;}};
+// Node >=21 ships a built-in `navigator` as a getter-only accessor on globalThis,
+// so a plain `global.navigator = {...}` assignment silently no-ops (no setter, non-strict).
+// Object.defineProperty replaces the accessor outright so the mock actually takes effect.
+Object.defineProperty(global,'navigator',{value:{sendBeacon:(url,body)=>{sent.push({url,body});return true;}},configurable:true,writable:true});
 global.Blob=class BlobMock{constructor(parts,opts){this.parts=parts;this.type=opts&&opts.type;}};
 global.fetch=()=>Promise.resolve({ok:true});
 

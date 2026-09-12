@@ -1,6 +1,6 @@
 // Anonymous KPI endpoint for AI Work Style MVP
 // Cloudflare Worker + Analytics Engine binding: ANALYTICS
-// Privacy: no IP, UA, referrer, free text, cookies, or identifiers are persisted.
+// Privacy: no IP, UA, referrer, free text, session identifiers, or client-tracking state are persisted.
 
 const ALLOWED_EVENTS = new Set([
   'page_view',
