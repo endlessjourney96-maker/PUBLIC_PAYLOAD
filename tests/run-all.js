@@ -5,7 +5,8 @@ const { spawnSync } = require('node:child_process');
 
 const suites = [
   'tests/recommendation-integration.test.js',
-  'tests/analytics-contract.test.js'
+  'tests/analytics-contract.test.js',
+  'tests/analytics-bridge.test.js'
 ];
 
 for (const suite of suites) {
@@ -20,4 +21,4 @@ for (const suite of suites) {
   }
 }
 
-console.log('MVP preflight: recommendation + analytics/assets contracts OK');
+console.log('MVP preflight: recommendation + analytics/assets + browser bridge contracts OK');
