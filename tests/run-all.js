@@ -8,6 +8,7 @@ const suites = [
   'tests/solution-catalog.test.js',
   'tests/recommendation-integration.test.js',
   'tests/user-operating-model.test.js',
+  'tests/diagnosis-uom-adapter.test.js',
   'tests/analytics-contract.test.js',
   'tests/analytics-bridge.test.js',
   'tests/analytics-worker-contract.test.js'
@@ -25,4 +26,4 @@ for (const suite of suites) {
   }
 }
 
-console.log('MVP preflight: engine + catalog + recommendation + UOM + analytics/assets + browser bridge + worker contracts OK');
+console.log('MVP preflight: engine + catalog + recommendation + UOM + diagnosis adapter + analytics/assets + browser bridge + worker contracts OK');
