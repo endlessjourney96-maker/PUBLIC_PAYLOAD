@@ -1,6 +1,6 @@
 # AI仕事環境・商品選定MVP — Operations
 
-Last verified: 2026-09-14 10:00 JST
+Last verified: 2026-09-14 18:58 JST
 
 ## Canonical state
 
@@ -16,9 +16,9 @@ Last verified: 2026-09-14 10:00 JST
 
 ## Critical path
 
-**Public runtime verification → first observed anonymous event → first observed funnel KPI.**
+**First observed anonymous event → first observed funnel KPI.**
 
-Seven-suite preflight is now proven green in GitHub Actions. Do not spend the next cycle re-proving repository contracts unless code changes. The next value gate is proving that the connected public runtime is actually running the intended code and observing a real anonymous event end-to-end.
+Seven-suite preflight and the read-only public-runtime smoke are both proven green in GitHub Actions. Do not spend the next cycle re-proving repository/runtime contracts unless code changes. The next value gate is observing a real anonymous event end-to-end without fabricating KPI traffic.
 
 ## User Operating Model
 
@@ -34,7 +34,7 @@ Repository configuration does not by itself prove which commit is live. Before a
 
 1. Inspect the existing Cloudflare/Git integration and current deployed commit.
 2. Avoid creating a new account, project, domain, paid service, or changing account settings without owner approval.
-3. If the existing integration auto-deploys this repository, verify the public URL after the commit and record the deployed SHA.
+3. If the existing integration auto-deploys this repository, verify the public URL after the commit and record the deployed SHA when observable.
 4. If it does not auto-deploy, stop before changing external configuration and report the exact owner action needed.
 
 ## Funnel contract
@@ -52,38 +52,44 @@ The browser keeps a local `mvp_events` log and attempts to send the same allow-l
 
 ### Current measurement gap
 
-The remote collector exists in repository code, but production deployment and Analytics Engine ingestion have not yet been re-verified. Therefore remote PV/click/CV reporting must not be claimed until a real public request is observed.
+The known public runtime passed the read-only smoke on 2026-09-14 JST, including `/`, `/meeting-minutes-pm.html`, and rejection behavior for an intentionally invalid `/api/events` request. This proves public reachability and the expected endpoint contract without writing fake KPI events. Analytics Engine ingestion of a real user event is still not observed, so remote PV/click/CV reporting must not yet be claimed.
 
-## Preflight
+## Preflight and runtime smoke
 
-Canonical command: `node tests/run-all.js`.
+Canonical preflight command: `node tests/run-all.js`.
 
-**PASS verified 2026-09-14 JST.** GitHub Actions run `34785582730` completed successfully on head SHA `49a6532a9b13460058daa4290352cc126f8f5bae`; job `preflight` and step `Run seven-suite preflight` both concluded `success`.
+**Seven-suite PASS verified 2026-09-14 JST.** GitHub Actions run `34785582730` completed successfully.
 
-The suite covers engine, catalog, recommendation integration, UOM, analytics/assets contract, browser analytics bridge and Worker analytics contract.
+**Public runtime smoke PASS verified 2026-09-14 JST.** GitHub Actions run `34816329100` on head SHA `ffd7709671c8542219c8ead15016b9b5265c0009` completed successfully. Job `public-runtime-smoke` and step `Verify known public runtime without writing KPI` both concluded `success`; the `preflight` job also concluded `success` in the same run.
+
+The smoke verifier intentionally does not emit a valid KPI event. It checks public pages and the `/api/events` rejection contract so operational verification cannot be mistaken for real traffic.
 
 ## Smoke acceptance
 
-After confirming a deployed runtime, verify:
+Runtime contract now verified automatically:
 
 1. `/` returns HTTP 2xx.
 2. `/meeting-minutes-pm.html` returns HTTP 2xx.
-3. Landing-page CTA reaches the diagnosis page.
-4. Major CTA is usable at mobile width.
-5. Diagnosis can start and complete.
-6. A recommendation can be clicked when a paid comparison is eligible.
-7. "Buy nothing" remains possible for zero-budget/no-fit cases.
-8. `POST /api/events` accepts only anonymous allow-listed fields and an event is observable in the configured dataset.
+3. `/api/events` exhibits the expected rejection behavior for invalid input without writing KPI.
+
+Still requiring real-user observation:
+
+4. Landing-page CTA reaches the diagnosis page in an actual user session.
+5. Major CTA is usable at mobile width.
+6. Diagnosis can start and complete.
+7. A recommendation can be clicked when a paid comparison is eligible.
+8. "Buy nothing" remains possible for zero-budget/no-fit cases.
+9. A real allow-listed event is observable in the configured Analytics Engine dataset.
 
 ## KPI log
 
 | checked_at | public_url | deployed_sha | PV | diagnosis_start | diagnosis_complete | recommendation_click | CV | revenue_yen |
 |---|---|---|---:|---:|---:|---:|---:|---:|
-| 2026-09-14 10:00 JST | not re-verified this cycle | not re-verified | - | - | - | - | - | - |
+| 2026-09-14 18:58 JST | known Workers runtime smoke PASS | not independently observed | - | - | - | - | - | - |
 
 ## PMO priority
 
-1. **AI仕事環境・商品選定MVP** — primary; verify runtime and close first measurement loop.
+1. **AI仕事環境・商品選定MVP** — primary; observe first real event and close first measurement loop.
 2. **note / owned content** — acquisition after funnel measurability; avoid volume production first.
 3. **ラクヨコ** — short-term monetization experiment using the same recommendation model; do not delay primary MVP.
 4. **法人DX / UOM-based services / digital products** — strategically attractive, especially as UOM expands from individual to team/company operating models, but keep outside the first-click/CV critical path.
@@ -95,10 +101,10 @@ After confirming a deployed runtime, verify:
 ## Next cycle
 
 1. Read this file first.
-2. Do not repeat preflight unless repository code changes; current seven-suite baseline is green.
-3. Confirm the known Cloudflare Workers public runtime and deployed commit without changing external configuration.
-4. If runtime matches, perform smoke acceptance and observe one anonymous event end-to-end.
-5. Record only real observed funnel KPIs.
+2. Do not repeat preflight/runtime smoke unless repository/runtime code changes; both current baselines are green.
+3. Observe one genuine anonymous event end-to-end in Analytics Engine; do not generate a valid synthetic event and count it as KPI.
+4. Record only real observed funnel KPIs.
+5. If ingestion cannot be observed with current read access, document the exact observability gap rather than changing Cloudflare account settings.
 6. Only after the measurement loop works, connect the existing 3-question diagnosis to the smallest useful UOM adapter; do not expand the questionnaire merely to populate UOM.
 
 ## Guardrails
