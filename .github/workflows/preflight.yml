@@ -5,6 +5,7 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -22,3 +23,17 @@ jobs:
           node-version: '22'
       - name: Run seven-suite preflight
         run: node tests/run-all.js
+
+  public-runtime-smoke:
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify known public runtime without writing KPI
+        run: node scripts/verify-public-runtime.mjs https://steep-sea-7ffd.ryo-endless-journey96.workers.dev
