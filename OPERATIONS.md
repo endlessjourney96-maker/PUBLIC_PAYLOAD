@@ -1,6 +1,6 @@
 # AI仕事環境・商品選定MVP — Operations
 
-Last verified: 2026-09-14 18:58 JST
+Last verified: 2026-09-14 22:13 JST
 
 ## Canonical state
 
@@ -16,9 +16,9 @@ Last verified: 2026-09-14 18:58 JST
 
 ## Critical path
 
-**First observed anonymous event → first observed funnel KPI.**
+**Read one genuine Analytics Engine event → record first observed funnel KPI.**
 
-Seven-suite preflight and the read-only public-runtime smoke are both proven green in GitHub Actions. Do not spend the next cycle re-proving repository/runtime contracts unless code changes. The next value gate is observing a real anonymous event end-to-end without fabricating KPI traffic.
+Seven-suite preflight and the read-only public-runtime smoke are proven green in GitHub Actions. Do not spend the next cycle re-proving repository/runtime contracts unless code changes. The remaining observability gate is read access to the Analytics Engine dataset; do not generate synthetic valid events merely to make the KPI table non-empty.
 
 ## User Operating Model
 
@@ -48,11 +48,15 @@ Allow-listed events:
 - `diagnosis_complete`
 - `recommendation_click`
 
-The browser keeps a local `mvp_events` log and attempts to send the same allow-listed anonymous events to `POST /api/events`. `src/analytics-worker.js` implements that endpoint and writes valid events to Cloudflare Analytics Engine when the `ANALYTICS` binding is available. It rejects unsupported methods/events, oversized payloads and unsafe values; it does not intentionally persist IP, user-agent, referrer, free text, session IDs, names or email.
+The browser keeps a local `mvp_events` log and the work-pattern engine bridges the same allow-listed anonymous events to `POST /api/events`. `src/analytics-worker.js` implements that endpoint and writes valid events to Cloudflare Analytics Engine when the `ANALYTICS` binding is available. It rejects unsupported methods/events, oversized payloads and unsafe values; it does not intentionally persist IP, user-agent, referrer, free text, session IDs, names or email.
 
 ### Current measurement gap
 
-The known public runtime passed the read-only smoke on 2026-09-14 JST, including `/`, `/meeting-minutes-pm.html`, and rejection behavior for an intentionally invalid `/api/events` request. This proves public reachability and the expected endpoint contract without writing fake KPI events. Analytics Engine ingestion of a real user event is still not observed, so remote PV/click/CV reporting must not yet be claimed.
+The known public runtime passed the read-only smoke on 2026-09-14 JST, including `/`, `/meeting-minutes-pm.html`, and rejection behavior for an intentionally invalid `/api/events` request. This proves public reachability and the expected endpoint contract without writing fake KPI events.
+
+A read-only query helper now exists at `scripts/query-analytics-engine.mjs`. It queries only the four allow-listed event names for the last 7 days and uses `SUM(_sample_interval)` so observed counts remain sampling-aware. It requires `CF_ACCOUNT_ID` and `CF_ANALYTICS_TOKEN` with Cloudflare **Account Analytics: Read** permission. No credential is stored in this repository.
+
+Until read-only credentials are available through an approved secret/connection path, Analytics Engine ingestion cannot be independently observed from this operating environment. Do not place a Cloudflare token in source code, chat text, public GitHub variables, or logs.
 
 ## Preflight and runtime smoke
 
@@ -62,11 +66,13 @@ Canonical preflight command: `node tests/run-all.js`.
 
 **Public runtime smoke PASS verified 2026-09-14 JST.** GitHub Actions run `34816329100` on head SHA `ffd7709671c8542219c8ead15016b9b5265c0009` completed successfully. Job `public-runtime-smoke` and step `Verify known public runtime without writing KPI` both concluded `success`; the `preflight` job also concluded `success` in the same run.
 
+A later operations-only push at head `20b3040344a682fcdea78e16fab362c861c9785c` also completed both jobs successfully in run `34830837848`.
+
 The smoke verifier intentionally does not emit a valid KPI event. It checks public pages and the `/api/events` rejection contract so operational verification cannot be mistaken for real traffic.
 
 ## Smoke acceptance
 
-Runtime contract now verified automatically:
+Runtime contract verified automatically:
 
 1. `/` returns HTTP 2xx.
 2. `/meeting-minutes-pm.html` returns HTTP 2xx.
@@ -85,11 +91,11 @@ Still requiring real-user observation:
 
 | checked_at | public_url | deployed_sha | PV | diagnosis_start | diagnosis_complete | recommendation_click | CV | revenue_yen |
 |---|---|---|---:|---:|---:|---:|---:|---:|
-| 2026-09-14 18:58 JST | known Workers runtime smoke PASS | not independently observed | - | - | - | - | - | - |
+| 2026-09-14 22:13 JST | known Workers runtime smoke PASS | not independently observed | - | - | - | - | - | - |
 
 ## PMO priority
 
-1. **AI仕事環境・商品選定MVP** — primary; observe first real event and close first measurement loop.
+1. **AI仕事環境・商品選定MVP** — primary; obtain read-only observability and close first measurement loop.
 2. **note / owned content** — acquisition after funnel measurability; avoid volume production first.
 3. **ラクヨコ** — short-term monetization experiment using the same recommendation model; do not delay primary MVP.
 4. **法人DX / UOM-based services / digital products** — strategically attractive, especially as UOM expands from individual to team/company operating models, but keep outside the first-click/CV critical path.
@@ -101,10 +107,10 @@ Still requiring real-user observation:
 ## Next cycle
 
 1. Read this file first.
-2. Do not repeat preflight/runtime smoke unless repository/runtime code changes; both current baselines are green.
-3. Observe one genuine anonymous event end-to-end in Analytics Engine; do not generate a valid synthetic event and count it as KPI.
-4. Record only real observed funnel KPIs.
-5. If ingestion cannot be observed with current read access, document the exact observability gap rather than changing Cloudflare account settings.
+2. Do not repeat preflight/runtime smoke unless repository/runtime code changes; current baselines are green.
+3. If approved read-only Cloudflare credentials/connection are available, run `scripts/query-analytics-engine.mjs` and record only returned observed values.
+4. If credentials are not available, do not create/change tokens autonomously; keep the exact observability gap explicit.
+5. Do not generate a valid synthetic event and count it as KPI.
 6. Only after the measurement loop works, connect the existing 3-question diagnosis to the smallest useful UOM adapter; do not expand the questionnaire merely to populate UOM.
 
 ## Guardrails
