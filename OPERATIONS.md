@@ -1,6 +1,6 @@
 # AI仕事環境・商品選定MVP — Operations
 
-Last verified: 2026-09-14 22:13 JST
+Last verified: 2026-09-15 03:57 JST
 
 ## Canonical state
 
@@ -9,6 +9,7 @@ Last verified: 2026-09-14 22:13 JST
 - Search-intent landing page: `meeting-minutes-pm.html`
 - Recommendation engine: `src/work-pattern-engine.js`
 - User Operating Model core: `src/user-operating-model.js`
+- Diagnosis→UOM adapter: `src/diagnosis-uom-adapter.js`
 - Anonymous event worker: `src/analytics-worker.js`
 - Cloudflare deployment manifest: `wrangler.jsonc`
 - Product principle: 3問診断 → 無料改善を先に提示 → 必要な場合だけAI/SaaS・物理商品・支援を比較 → 買わない判断も許容
@@ -18,13 +19,13 @@ Last verified: 2026-09-14 22:13 JST
 
 **Read one genuine Analytics Engine event → record first observed funnel KPI.**
 
-Seven-suite preflight and the read-only public-runtime smoke are proven green in GitHub Actions. Do not spend the next cycle re-proving repository/runtime contracts unless code changes. The remaining observability gate is read access to the Analytics Engine dataset; do not generate synthetic valid events merely to make the KPI table non-empty.
+Eight-suite preflight and the read-only public-runtime smoke are proven green in GitHub Actions. Do not spend the next cycle re-proving repository/runtime contracts unless code changes. The remaining observability gate is read access to the Analytics Engine dataset; do not generate synthetic valid events merely to make the KPI table non-empty.
 
 ## User Operating Model
 
 UOM v1 is intentionally small and non-identifying. It captures structured intent and constraints such as goal, pains, budget, AI skill, automation preference, setup tolerance and existing tools. It excludes names, email, free text and affiliate payout. It is a common core candidate for future SaaS/product recommendations and B2B AI-DX, but UOM expansion must not delay first public measurement.
 
-Contract coverage: `tests/user-operating-model.test.js`.
+The existing 3-question diagnosis now has a minimal adapter at `src/diagnosis-uom-adapter.js`; it reuses answers already collected rather than expanding the questionnaire. Contract coverage: `tests/user-operating-model.test.js` and `tests/diagnosis-uom-adapter.test.js`.
 
 ## Deployment/runtime notes
 
@@ -54,7 +55,7 @@ The browser keeps a local `mvp_events` log and the work-pattern engine bridges t
 
 The known public runtime passed the read-only smoke on 2026-09-14 JST, including `/`, `/meeting-minutes-pm.html`, and rejection behavior for an intentionally invalid `/api/events` request. This proves public reachability and the expected endpoint contract without writing fake KPI events.
 
-A read-only query helper now exists at `scripts/query-analytics-engine.mjs`. It queries only the four allow-listed event names for the last 7 days and uses `SUM(_sample_interval)` so observed counts remain sampling-aware. It requires `CF_ACCOUNT_ID` and `CF_ANALYTICS_TOKEN` with Cloudflare **Account Analytics: Read** permission. No credential is stored in this repository.
+A read-only query helper exists at `scripts/query-analytics-engine.mjs`. It queries only the four allow-listed event names for the last 7 days and uses `SUM(_sample_interval)` so observed counts remain sampling-aware. It requires `CF_ACCOUNT_ID` and `CF_ANALYTICS_TOKEN` with Cloudflare **Account Analytics: Read** permission. No credential is stored in this repository.
 
 Until read-only credentials are available through an approved secret/connection path, Analytics Engine ingestion cannot be independently observed from this operating environment. Do not place a Cloudflare token in source code, chat text, public GitHub variables, or logs.
 
@@ -62,7 +63,7 @@ Until read-only credentials are available through an approved secret/connection 
 
 Canonical preflight command: `node tests/run-all.js`.
 
-**Seven-suite PASS verified 2026-09-14 JST.** GitHub Actions run `34785582730` completed successfully.
+**Eight-suite PASS verified 2026-09-15 JST.** GitHub Actions run `34866212928`, head SHA `9353deccf7b18d89df9a7b3e947d8264797e295d`, completed `success`. This baseline includes the diagnosis→UOM adapter alongside engine, catalog, recommendation, UOM, analytics contract, browser bridge and worker contract tests.
 
 **Public runtime smoke PASS verified 2026-09-14 JST.** GitHub Actions run `34816329100` on head SHA `ffd7709671c8542219c8ead15016b9b5265c0009` completed successfully. Job `public-runtime-smoke` and step `Verify known public runtime without writing KPI` both concluded `success`; the `preflight` job also concluded `success` in the same run.
 
@@ -91,7 +92,7 @@ Still requiring real-user observation:
 
 | checked_at | public_url | deployed_sha | PV | diagnosis_start | diagnosis_complete | recommendation_click | CV | revenue_yen |
 |---|---|---|---:|---:|---:|---:|---:|---:|
-| 2026-09-14 22:13 JST | known Workers runtime smoke PASS | not independently observed | - | - | - | - | - | - |
+| 2026-09-15 03:57 JST | known Workers runtime smoke PASS | not independently observed | - | - | - | - | - | - |
 
 ## PMO priority
 
@@ -111,7 +112,8 @@ Still requiring real-user observation:
 3. If approved read-only Cloudflare credentials/connection are available, run `scripts/query-analytics-engine.mjs` and record only returned observed values.
 4. If credentials are not available, do not create/change tokens autonomously; keep the exact observability gap explicit.
 5. Do not generate a valid synthetic event and count it as KPI.
-6. Only after the measurement loop works, connect the existing 3-question diagnosis to the smallest useful UOM adapter; do not expand the questionnaire merely to populate UOM.
+6. Keep the diagnosis→UOM adapter minimal; do not expand the questionnaire merely to populate UOM.
+7. Once the measurement loop is observable, prioritize one real acquisition path and first recommendation click/CV before broader feature work.
 
 ## Guardrails
 
