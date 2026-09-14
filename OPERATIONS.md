@@ -1,6 +1,6 @@
 # AI仕事環境・商品選定MVP — Operations
 
-Last verified: 2026-09-14 JST
+Last verified: 2026-09-14 10:00 JST
 
 ## Canonical state
 
@@ -16,9 +16,9 @@ Last verified: 2026-09-14 JST
 
 ## Critical path
 
-**Preflight → public runtime verification → first observed funnel KPI.**
+**Public runtime verification → first observed anonymous event → first observed funnel KPI.**
 
-Do not create feature versions merely to show activity. The implementation now contains the recommendation engine, minimal UOM, browser event bridge, Worker event collector and Cloudflare manifest. The next value gate is proving that these contracts pass and that the connected public runtime is actually running the intended commit.
+Seven-suite preflight is now proven green in GitHub Actions. Do not spend the next cycle re-proving repository contracts unless code changes. The next value gate is proving that the connected public runtime is actually running the intended code and observing a real anonymous event end-to-end.
 
 ## User Operating Model
 
@@ -28,7 +28,7 @@ Contract coverage: `tests/user-operating-model.test.js`.
 
 ## Deployment/runtime notes
 
-`wrangler.jsonc` now explicitly defines the Cloudflare Worker entry (`src/analytics-worker.js`), static assets, `/api/*` worker-first routing and Analytics Engine binding `ANALYTICS` → dataset `ai_work_style_events`.
+`wrangler.jsonc` explicitly defines the Cloudflare Worker entry (`src/analytics-worker.js`), static assets, `/api/*` worker-first routing and Analytics Engine binding `ANALYTICS` → dataset `ai_work_style_events`.
 
 Repository configuration does not by itself prove which commit is live. Before any deployment/configuration change:
 
@@ -58,7 +58,9 @@ The remote collector exists in repository code, but production deployment and An
 
 Canonical command: `node tests/run-all.js`.
 
-Current suite covers engine, catalog, recommendation integration, UOM, analytics/assets contract, browser analytics bridge and Worker analytics contract. Repository presence of tests is not equivalent to a passing execution; record PASS only after execution in a runtime capable of running Node.
+**PASS verified 2026-09-14 JST.** GitHub Actions run `34785582730` completed successfully on head SHA `49a6532a9b13460058daa4290352cc126f8f5bae`; job `preflight` and step `Run seven-suite preflight` both concluded `success`.
+
+The suite covers engine, catalog, recommendation integration, UOM, analytics/assets contract, browser analytics bridge and Worker analytics contract.
 
 ## Smoke acceptance
 
@@ -77,11 +79,11 @@ After confirming a deployed runtime, verify:
 
 | checked_at | public_url | deployed_sha | PV | diagnosis_start | diagnosis_complete | recommendation_click | CV | revenue_yen |
 |---|---|---|---:|---:|---:|---:|---:|---:|
-| 2026-09-14 | not re-verified this cycle | not re-verified | - | - | - | - | - | - |
+| 2026-09-14 10:00 JST | not re-verified this cycle | not re-verified | - | - | - | - | - | - |
 
 ## PMO priority
 
-1. **AI仕事環境・商品選定MVP** — primary; pass preflight, verify runtime and close first measurement loop.
+1. **AI仕事環境・商品選定MVP** — primary; verify runtime and close first measurement loop.
 2. **note / owned content** — acquisition after funnel measurability; avoid volume production first.
 3. **ラクヨコ** — short-term monetization experiment using the same recommendation model; do not delay primary MVP.
 4. **法人DX / UOM-based services / digital products** — strategically attractive, especially as UOM expands from individual to team/company operating models, but keep outside the first-click/CV critical path.
@@ -93,7 +95,7 @@ After confirming a deployed runtime, verify:
 ## Next cycle
 
 1. Read this file first.
-2. Execute/verify the seven-suite preflight when an executable checkout/runtime is available.
+2. Do not repeat preflight unless repository code changes; current seven-suite baseline is green.
 3. Confirm the known Cloudflare Workers public runtime and deployed commit without changing external configuration.
 4. If runtime matches, perform smoke acceptance and observe one anonymous event end-to-end.
 5. Record only real observed funnel KPIs.
