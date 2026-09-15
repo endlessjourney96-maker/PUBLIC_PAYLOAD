@@ -1,6 +1,6 @@
 # AI仕事環境・商品選定MVP — Operations
 
-Last verified: 2026-09-15 22:00 JST
+Last verified: 2026-09-16 04:00 JST
 
 ## Canonical state
 
@@ -13,6 +13,7 @@ Last verified: 2026-09-15 22:00 JST
 - Anonymous event worker: `src/analytics-worker.js`
 - Cloudflare deployment manifest: `wrangler.jsonc`
 - Acquisition playbook: `ACQUISITION_PLAYBOOK.md`
+- Opportunity radar: `docs/AI_DX_OPPORTUNITY_RADAR_2026-09-16.md`
 - Product principle: 3問診断 → 無料改善を先に提示 → 必要な場合だけAI/SaaS・物理商品・支援を比較 → 買わない判断も許容
 - Ranking principle: fit first; affiliate payout must not affect ranking.
 
@@ -20,7 +21,7 @@ Last verified: 2026-09-15 22:00 JST
 
 **Read one genuine Analytics Engine event → record first observed funnel KPI → drive one attributable acquisition path to first recommendation click/CV.**
 
-Eight-suite preflight and the read-only public-runtime smoke are proven green. The latest AEO/playbook head (`6c79830a...`) also passed GitHub Actions run 19 on 2026-09-15. Do not spend cycles re-proving unchanged contracts. Analytics Engine read access remains the observability gate; never generate synthetic valid events merely to populate KPI.
+Eight-suite preflight and the read-only public-runtime smoke are proven green. Latest observed GitHub Actions run 21 (`a9109fcb...`, AI/DX opportunity radar) completed successfully. Do not spend cycles re-proving unchanged contracts. Analytics Engine read access remains the observability gate; never generate synthetic valid events merely to populate KPI.
 
 ## Acquisition attribution
 
@@ -28,9 +29,13 @@ The owned-search landing page links to `index.html` with anonymous `source=owned
 
 `tests/analytics-bridge.test.js` covers source/campaign forwarding plus rejection of personal/free-text fields. The attribution implementation and subsequent playbook/AEO gate are quality-gated green.
 
+## Acquisition page machine-readability
+
+At 2026-09-16 04:00 JST, `meeting-minutes-pm.html` was hardened without adding a new page or channel: explicit index/follow snippet controls plus Schema.org JSON-LD (`WebPage` + `HowTo`) now describe the same visible 3-step free-improvement content. This is intended to improve machine-readable consistency for search/answer engines while keeping owned-search validation first. It does not prove ranking, citation, traffic, or AEO reach; those require observed evidence.
+
 ## AI discovery / AEO gate
 
-`ACQUISITION_PLAYBOOK.md` now requires a read-only crawler-policy inspection before treating AI-search/AEO as an acquisition channel. Do not change Cloudflare crawler/account settings without owner approval. This is a future acquisition gate, not a reason to divert effort from the first measurable owned-search funnel.
+`ACQUISITION_PLAYBOOK.md` requires a read-only crawler-policy inspection before treating AI-search/AEO as an acquisition channel. Do not change Cloudflare crawler/account settings without owner approval. This is a future acquisition gate, not a reason to divert effort from the first measurable owned-search funnel.
 
 ## User Operating Model
 
@@ -52,24 +57,26 @@ The known public runtime passed read-only smoke, but genuine Analytics Engine in
 
 | checked_at | public_url | deployed_sha | PV | diagnosis_start | diagnosis_complete | recommendation_click | CV | revenue_yen |
 |---|---|---|---:|---:|---:|---:|---:|---:|
-| 2026-09-15 22:00 JST | known Workers runtime smoke PASS | not independently observed | - | - | - | - | - | - |
+| 2026-09-16 04:00 JST | known Workers runtime smoke previously PASS | not independently observed | - | - | - | - | - | - |
 
 No new verified PV, clicks, CV or revenue are available. Missing values remain unknown, not zero.
 
-## PM decision — 2026-09-15 22:00 JST
+## PM decision — 2026-09-16 04:00 JST
 
-- Latest AEO/playbook change is CI-green (run 19, head `6c79830a...`).
-- Do not expand features, landing pages, SNS channels, paid acquisition, affiliate activation, or UOM scope before first measurable funnel evidence.
-- New-business scout: **新規着手なし**. No observed change justifies diverting build capacity from the primary MVP.
-- Strategic radar remains B2B AI-DX/UOM and reusable recommendation/measurement assets, but these stay behind current CV validation.
+- Primary MVP remains first priority; new-business scout remains **新規着手なし**.
+- B2B AI workflow diagnosis/implementation remains the strongest next-stage radar candidate, but it stays behind first measurable MVP funnel evidence.
+- Market evidence continues to favor workflow-integrated agents with governance, context, observability and ROI measurement rather than generic AI content production; this reinforces reuse of diagnosis/UOM/measurement assets, not a pivot.
+- Do not expand landing pages, SNS channels, paid acquisition, affiliate activation, or UOM scope before first measurable funnel evidence.
+- Machine-readability hardening of the existing single landing page is allowed because it reuses visible content and does not create a competing acquisition path.
 
 ## Next cycle
 
 1. Read this file and `ACQUISITION_PLAYBOOK.md` first.
-2. If approved Cloudflare read-only credentials/connection are available, run `scripts/query-analytics-engine.mjs` and record only returned observed values.
-3. If credentials are unavailable, do not create/change tokens autonomously and do not fabricate KPI.
-4. Keep the single test path `meeting-minutes-pm` → diagnosis → free advice → only-if-needed recommendation ready for the first approved real acquisition.
-5. Avoid broader feature work; only fix defects that directly block measurability, trust, or first recommendation click/CV.
+2. Confirm the metadata-hardening commit CI result; fix only if it fails.
+3. If approved Cloudflare read-only credentials/connection are available, run `scripts/query-analytics-engine.mjs` and record only returned observed values.
+4. If credentials are unavailable, do not create/change tokens autonomously and do not fabricate KPI.
+5. Keep the single test path `meeting-minutes-pm` → diagnosis → free advice → only-if-needed recommendation ready for the first approved real acquisition.
+6. Avoid broader feature work; only fix defects that directly block measurability, trust, discoverability of the existing page, or first recommendation click/CV.
 
 ## Guardrails
 
