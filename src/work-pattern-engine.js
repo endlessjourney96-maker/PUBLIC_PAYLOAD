@@ -26,7 +26,6 @@
     const overlap=solution.tags.filter(t=>(pattern.solution_tags||[]).includes(t)).length;
     if(!overlap) return -1;
     if(solution.cost>budget) return -1;
-    // Fit dominates. Price/revenue/affiliate payout is deliberately absent.
     return overlap*10 + (solution.kind==='free'?5:0) + (solution.cost===0?2:0);
   }
 
@@ -36,21 +35,13 @@
     const ranked=SOLUTIONS.map(s=>({...s,score:score(s,pattern,budget)})).filter(s=>s.score>=0).sort((a,b)=>b.score-a.score||a.cost-b.cost);
     const free=ranked.filter(x=>x.kind==='free').slice(0,1);
     const paid=budget>0?ranked.filter(x=>x.kind!=='free').slice(0,2):[];
-    return {
-      pattern_id:pattern.id,
-      free_first:pattern.free_first,
-      decision:paid.length?'compare_options':'buy_nothing',
-      recommendations:[...free,...paid].map(({score,...x})=>x),
-      ranking_policy:'fit_first_no_affiliate_payout'
-    };
+    return {pattern_id:pattern.id,free_first:pattern.free_first,decision:paid.length?'compare_options':'buy_nothing',recommendations:[...free,...paid].map(({score,...x})=>x),ranking_policy:'fit_first_no_affiliate_payout'};
   }
 
-  // Bridge the existing local MVP event log to the anonymous Worker endpoint.
-  // This keeps local diagnostics intact and fails open if analytics is unavailable.
   if(typeof window!=='undefined' && window.localStorage && !window.__mvpAnalyticsBridge){
     window.__mvpAnalyticsBridge=true;
     const allowedEvents=new Set(['page_view','diagnosis_start','diagnosis_complete','recommendation_click']);
-    const allowedKeys=new Set(['pattern','budget','decision','recommendation_id','kind','rank']);
+    const allowedKeys=new Set(['source','campaign','pattern','budget','decision','recommendation_id','kind','rank']);
     const safe=/^[a-zA-Z0-9_.:-]{1,80}$/;
     const originalSetItem=Storage.prototype.setItem;
     function sendEvent(event){
@@ -64,24 +55,17 @@
       }
       try{
         const body=JSON.stringify(payload);
-        if(navigator.sendBeacon){
-          const blob=new Blob([body],{type:'application/json'});
-          if(navigator.sendBeacon('/api/events',blob)) return;
-        }
+        if(navigator.sendBeacon){const blob=new Blob([body],{type:'application/json'});if(navigator.sendBeacon('/api/events',blob)) return;}
         fetch('/api/events',{method:'POST',headers:{'content-type':'application/json'},body,keepalive:true,credentials:'omit',cache:'no-store'}).catch(()=>{});
       }catch(_){ }
     }
     Storage.prototype.setItem=function(key,value){
       const result=originalSetItem.apply(this,arguments);
       if(this===window.localStorage&&key==='mvp_events'){
-        try{
-          const events=JSON.parse(value||'[]');
-          sendEvent(events[events.length-1]);
-        }catch(_){ }
+        try{const events=JSON.parse(value||'[]');sendEvent(events[events.length-1]);}catch(_){ }
       }
       return result;
     };
   }
-
   return {SOLUTIONS,normalizeBudget,recommend};
 });
