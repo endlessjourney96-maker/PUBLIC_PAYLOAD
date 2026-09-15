@@ -21,7 +21,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Run seven-suite preflight
+      - name: Run eight-suite preflight
         run: node tests/run-all.js
 
   public-runtime-smoke:
