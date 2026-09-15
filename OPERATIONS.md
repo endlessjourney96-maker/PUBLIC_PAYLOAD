@@ -1,6 +1,6 @@
 # AI仕事環境・商品選定MVP — Operations
 
-Last verified: 2026-09-15 03:57 JST
+Last verified: 2026-09-15 10:00 JST
 
 ## Canonical state
 
@@ -17,103 +17,76 @@ Last verified: 2026-09-15 03:57 JST
 
 ## Critical path
 
-**Read one genuine Analytics Engine event → record first observed funnel KPI.**
+**Read one genuine Analytics Engine event → record first observed funnel KPI → drive one attributable acquisition path to first recommendation click/CV.**
 
-Eight-suite preflight and the read-only public-runtime smoke are proven green in GitHub Actions. Do not spend the next cycle re-proving repository/runtime contracts unless code changes. The remaining observability gate is read access to the Analytics Engine dataset; do not generate synthetic valid events merely to make the KPI table non-empty.
+Eight-suite preflight and the read-only public-runtime smoke are proven green. Do not spend cycles re-proving unchanged contracts. Analytics Engine read access remains the observability gate; never generate synthetic valid events merely to populate KPI.
+
+## Acquisition attribution
+
+The owned-search landing page already links to `index.html` with anonymous `source=owned_search` and `campaign=meeting-minutes-pm`. On 2026-09-15 the diagnosis page and browser analytics bridge were updated so safe `source` and `campaign` query values are preserved across `page_view`, `diagnosis_start`, `diagnosis_complete`, and `recommendation_click`. The Worker already supported these fields. This closes a measurement-design gap: once read access exists, the first real funnel can be attributed to the acquisition entry without cookies, session IDs, referrer persistence, names, email, or free text.
+
+`tests/analytics-bridge.test.js` now covers source/campaign forwarding plus rejection of personal/free-text fields. GitHub Actions run 14 for the preceding attribution code commit completed success; run 15 for the final test commit was queued at last observation, so do not yet claim the final head as green until that run completes.
 
 ## User Operating Model
 
-UOM v1 is intentionally small and non-identifying. It captures structured intent and constraints such as goal, pains, budget, AI skill, automation preference, setup tolerance and existing tools. It excludes names, email, free text and affiliate payout. It is a common core candidate for future SaaS/product recommendations and B2B AI-DX, but UOM expansion must not delay first public measurement.
-
-The existing 3-question diagnosis now has a minimal adapter at `src/diagnosis-uom-adapter.js`; it reuses answers already collected rather than expanding the questionnaire. Contract coverage: `tests/user-operating-model.test.js` and `tests/diagnosis-uom-adapter.test.js`.
-
-## Deployment/runtime notes
-
-`wrangler.jsonc` explicitly defines the Cloudflare Worker entry (`src/analytics-worker.js`), static assets, `/api/*` worker-first routing and Analytics Engine binding `ANALYTICS` → dataset `ai_work_style_events`.
-
-Repository configuration does not by itself prove which commit is live. Before any deployment/configuration change:
-
-1. Inspect the existing Cloudflare/Git integration and current deployed commit.
-2. Avoid creating a new account, project, domain, paid service, or changing account settings without owner approval.
-3. If the existing integration auto-deploys this repository, verify the public URL after the commit and record the deployed SHA when observable.
-4. If it does not auto-deploy, stop before changing external configuration and report the exact owner action needed.
+UOM v1 is intentionally small and non-identifying. It captures structured intent and constraints such as goal, pains, budget, AI skill, automation preference, setup tolerance and existing tools. It excludes names, email, free text and affiliate payout. The existing 3-question diagnosis has a minimal adapter at `src/diagnosis-uom-adapter.js`; do not expand the questionnaire merely to populate UOM.
 
 ## Funnel contract
 
 Only record observed values. Never infer or fabricate KPIs.
 
-Allow-listed events:
+Allow-listed events: `page_view`, `diagnosis_start`, `diagnosis_complete`, `recommendation_click`.
 
-- `page_view`
-- `diagnosis_start`
-- `diagnosis_complete`
-- `recommendation_click`
-
-The browser keeps a local `mvp_events` log and the work-pattern engine bridges the same allow-listed anonymous events to `POST /api/events`. `src/analytics-worker.js` implements that endpoint and writes valid events to Cloudflare Analytics Engine when the `ANALYTICS` binding is available. It rejects unsupported methods/events, oversized payloads and unsafe values; it does not intentionally persist IP, user-agent, referrer, free text, session IDs, names or email.
+Anonymous dimensions may include source, campaign, pattern, budget, decision, recommendation_id, kind and rank. No IP, user-agent, referrer, free text, session IDs, names or email are intentionally persisted.
 
 ### Current measurement gap
 
-The known public runtime passed the read-only smoke on 2026-09-14 JST, including `/`, `/meeting-minutes-pm.html`, and rejection behavior for an intentionally invalid `/api/events` request. This proves public reachability and the expected endpoint contract without writing fake KPI events.
-
-A read-only query helper exists at `scripts/query-analytics-engine.mjs`. It queries only the four allow-listed event names for the last 7 days and uses `SUM(_sample_interval)` so observed counts remain sampling-aware. It requires `CF_ACCOUNT_ID` and `CF_ANALYTICS_TOKEN` with Cloudflare **Account Analytics: Read** permission. No credential is stored in this repository.
-
-Until read-only credentials are available through an approved secret/connection path, Analytics Engine ingestion cannot be independently observed from this operating environment. Do not place a Cloudflare token in source code, chat text, public GitHub variables, or logs.
-
-## Preflight and runtime smoke
-
-Canonical preflight command: `node tests/run-all.js`.
-
-**Eight-suite PASS verified 2026-09-15 JST.** GitHub Actions run `34866212928`, head SHA `9353deccf7b18d89df9a7b3e947d8264797e295d`, completed `success`. This baseline includes the diagnosis→UOM adapter alongside engine, catalog, recommendation, UOM, analytics contract, browser bridge and worker contract tests.
-
-**Public runtime smoke PASS verified 2026-09-14 JST.** GitHub Actions run `34816329100` on head SHA `ffd7709671c8542219c8ead15016b9b5265c0009` completed successfully. Job `public-runtime-smoke` and step `Verify known public runtime without writing KPI` both concluded `success`; the `preflight` job also concluded `success` in the same run.
-
-A later operations-only push at head `20b3040344a682fcdea78e16fab362c861c9785c` also completed both jobs successfully in run `34830837848`.
-
-The smoke verifier intentionally does not emit a valid KPI event. It checks public pages and the `/api/events` rejection contract so operational verification cannot be mistaken for real traffic.
-
-## Smoke acceptance
-
-Runtime contract verified automatically:
-
-1. `/` returns HTTP 2xx.
-2. `/meeting-minutes-pm.html` returns HTTP 2xx.
-3. `/api/events` exhibits the expected rejection behavior for invalid input without writing KPI.
-
-Still requiring real-user observation:
-
-4. Landing-page CTA reaches the diagnosis page in an actual user session.
-5. Major CTA is usable at mobile width.
-6. Diagnosis can start and complete.
-7. A recommendation can be clicked when a paid comparison is eligible.
-8. "Buy nothing" remains possible for zero-budget/no-fit cases.
-9. A real allow-listed event is observable in the configured Analytics Engine dataset.
+The known public runtime passed read-only smoke, but genuine Analytics Engine ingestion is not independently observable from this environment without approved read-only credentials/connection. `scripts/query-analytics-engine.mjs` is ready and requires `CF_ACCOUNT_ID` and `CF_ANALYTICS_TOKEN` with Cloudflare Account Analytics: Read permission. No credential is stored in the repository.
 
 ## KPI log
 
 | checked_at | public_url | deployed_sha | PV | diagnosis_start | diagnosis_complete | recommendation_click | CV | revenue_yen |
 |---|---|---|---:|---:|---:|---:|---:|---:|
-| 2026-09-15 03:57 JST | known Workers runtime smoke PASS | not independently observed | - | - | - | - | - | - |
+| 2026-09-15 10:00 JST | known Workers runtime smoke PASS | not independently observed | - | - | - | - | - | - |
 
-## PMO priority
+## Morning PMO — 2026-09-15
 
-1. **AI仕事環境・商品選定MVP** — primary; obtain read-only observability and close first measurement loop.
-2. **note / owned content** — acquisition after funnel measurability; avoid volume production first.
-3. **ラクヨコ** — short-term monetization experiment using the same recommendation model; do not delay primary MVP.
-4. **法人DX / UOM-based services / digital products** — strategically attractive, especially as UOM expands from individual to team/company operating models, but keep outside the first-click/CV critical path.
+### Previous-day / overnight result
+- Public runtime contract and eight-suite baseline were established.
+- Diagnosis→UOM adapter was completed without adding questions or PII.
+- Landing-page privacy wording was aligned with actual anonymous event behavior.
+- Acquisition attribution gap was identified and implementation added: owned-search source/campaign can now flow through the funnel.
+
+### Current hypothesis
+A narrow problem-first landing page (starting with PM meeting-minutes burden) → free improvement advice → 3-question diagnosis → only-if-needed comparison is a stronger trust/CV path than generic AI-tool rankings. The immediate test is not content volume; it is whether one attributable entry can produce diagnosis completion and recommendation consideration without weakening the buy-nothing option.
+
+### Monetization distance
+Code/runtime readiness is near the measurement stage, but monetization is not yet proven. The next meaningful commercial evidence is: real attributable visit → diagnosis completion → recommendation click; after that, only actual external conversion/revenue may be recorded as CV/revenue.
+
+### Observed KPI
+No new verified PV, clicks, CV or revenue are available. Missing values remain unknown, not zero.
+
+### Today top 3
+1. Close read-only Analytics Engine observability when an approved connection becomes available.
+2. Confirm final attribution test CI green and keep source/campaign measurement intact through deployment.
+3. After measurability, use one owned acquisition path first; do not fan out to multiple channels before the first attributable funnel signal.
+
+### Short-term monetization radar
+- Primary: AI仕事環境・商品選定MVP — highest asset reuse and lowest incremental fixed cost.
+- Secondary: ラクヨコ — keep as a bounded monetization experiment only if it reuses the same recommendation/measurement assets.
+- B2B AI-DX/UOM service — strategically attractive but slower to first proof and must not displace current CV validation.
 
 ## New-business scout decision
 
-**新規着手なし.** UOM strengthens the existing MVP and future AI-DX path rather than justifying a separate project. New ideas must beat the current path on time-to-first-revenue, margin/recurrence, effort, fixed cost, asset reuse, automation leverage, defensibility and safety before receiving build capacity.
+**新規着手なし.** No observed change currently justifies diverting build capacity from the primary MVP. UOM, B2B DX, digital products, creator/SNS operations and AI-assisted service work remain radar items, not active builds, until they clearly beat the current path on time-to-first-revenue, margin/recurrence, effort, fixed cost, asset reuse, automation leverage, defensibility and safety.
 
 ## Next cycle
 
 1. Read this file first.
-2. Do not repeat preflight/runtime smoke unless repository/runtime code changes; current baselines are green.
-3. If approved read-only Cloudflare credentials/connection are available, run `scripts/query-analytics-engine.mjs` and record only returned observed values.
-4. If credentials are not available, do not create/change tokens autonomously; keep the exact observability gap explicit.
-5. Do not generate a valid synthetic event and count it as KPI.
-6. Keep the diagnosis→UOM adapter minimal; do not expand the questionnaire merely to populate UOM.
-7. Once the measurement loop is observable, prioritize one real acquisition path and first recommendation click/CV before broader feature work.
+2. Check the final attribution-head GitHub Actions result; if green, treat acquisition attribution as quality-gated.
+3. If approved Cloudflare read-only credentials/connection are available, run `scripts/query-analytics-engine.mjs` and record only returned observed values.
+4. If credentials are unavailable, do not create/change tokens autonomously and do not fabricate KPI.
+5. Avoid broader feature work. Prepare only work that shortens the path to one attributable real funnel and first recommendation click/CV.
 
 ## Guardrails
 
