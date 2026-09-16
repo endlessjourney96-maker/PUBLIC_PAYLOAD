@@ -1,6 +1,6 @@
 # First Real Traffic Validation Runbook
 
-Last updated: 2026-09-16 07:01 JST
+Last updated: 2026-09-16 10:00 JST
 
 ## Objective
 
@@ -8,7 +8,7 @@ Move the AI work-environment/product-selection MVP from build-complete to eviden
 
 ## Preconditions
 
-- Latest observed MVP Preflight is green (run #23, head `5fdbaaef...`).
+- Latest observed MVP Preflight is green: run #24, head `5ee519b04bf66ff9b35199eba6458420fe9d79d8`, completed successfully.
 - Keep exactly one acquisition path: `meeting-minutes-pm.html` → diagnosis → free improvement → only-if-needed recommendation.
 - Do not generate synthetic valid analytics events to populate KPI.
 - Do not activate affiliate links, paid ads, SNS posts, outreach, account changes, purchases, contracts, or Cloudflare settings without explicit owner approval.
@@ -19,7 +19,7 @@ When approved Cloudflare read-only access is available:
 
 1. Run `scripts/query-analytics-engine.mjs` with `CF_ACCOUNT_ID` and a read-only `CF_ANALYTICS_TOKEN` supplied through the approved environment, never committed to Git.
 2. Record only returned genuine events in `OPERATIONS.md`.
-3. If no rows are returned, record the result as observed no-row output for that query window; do not convert unknown historical periods into zero.
+3. If no rows are returned, record the result as observed no-row output for that exact query window; do not convert unknown historical periods into zero.
 4. If the query cannot run because credentials are unavailable, stop at this gate and keep KPI unknown.
 
 ## Phase B — One approved real acquisition source
@@ -56,10 +56,20 @@ Do not skip ahead and optimize monetization before the preceding behavior is obs
 
 The first test succeeds operationally when at least one genuine attributable event can be read end-to-end from the approved analytics path. Commercial success is a separate claim and requires observed recommendation click/CV/revenue evidence.
 
+## Market-scout implication — 2026-09-16
+
+Fresh market evidence continues to strengthen the B2B AI workflow/governance opportunity, but does not justify diverting build capacity before first MVP funnel evidence. Enterprise demand is shifting toward workflow orchestration, observability, governance, cost control, and ROI measurement. Treat this as validation that the existing diagnosis/UOM/measurement assets have downstream B2B reuse value, not as permission to start a second product.
+
+Decision: **新規着手なし**. Re-score the B2B candidate only after the current funnel yields genuine behavioral evidence or a concrete buyer signal appears.
+
 ## Owner approval boundary
 
 Owner action is required only when the next step crosses an external boundary: supplying/authorizing read-only Cloudflare access, approving an external traffic action, affiliate activation, posting, outreach, paid acquisition, account/configuration change, contract, purchase, or other external commitment.
 
 ## Next PM action
 
-Until observability is available, keep the product stable and fix only defects that directly block trust, measurability, discoverability of the existing page, or the first recommendation click/CV. New-business scouting remains observational unless a candidate clearly exceeds the current MVP after accounting for time-to-first-sale, margin, fixed cost, reuse, automation leverage, competition, and legal/security risk.
+1. Keep the product stable; run no broader feature expansion.
+2. If approved Analytics Engine read access appears, query immediately and record only observed values.
+3. If access remains unavailable, fix only defects that directly block trust, measurability, discoverability of the existing page, or first recommendation click/CV.
+4. Preserve the single-path test until real evidence identifies the first break point.
+5. Keep new-business scouting observational unless a candidate clearly exceeds the current MVP after time-to-first-sale, margin, fixed cost, reuse, automation leverage, competition, and legal/security risk are included.
